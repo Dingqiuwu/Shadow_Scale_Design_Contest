@@ -3,25 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>万智牌设计大赛卡牌数据库</title>
+    <title>万智牌设计大赛卡牌数据库 alpha</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
     <style>
         body { background-color: #f8f9fa; padding-bottom: 80px; }
+        
+        /* 卡牌图片容器，用于绝对定位角标 */
+        .card-img-wrapper {
+            position: relative;
+            background-color: #e9ecef;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
         .card-img-top {
             width: 100%;
             height: 300px;
             object-fit: contain;
-            background-color: #e9ecef;
-            padding: 5px;
         }
+
         .card { 
             height: 100%; 
             transition: transform 0.2s;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             border: none;
+            overflow: hidden; /* 防止角标溢出 */
         }
         .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
         .oracle-text {
             white-space: pre-wrap;
             font-size: 0.85rem;
@@ -32,6 +42,35 @@
             margin-top: 10px;
             border: 1px solid #eee;
         }
+        
+        /* 🆕 分数角标 (左上角，加大字号) */
+        .score-badge {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 1.2rem; /* 加大字号 */
+            font-weight: bold;
+            color: #fff;
+            background-color: rgba(0, 0, 0, 0.7); /* 半透明黑底 */
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #ffd700; /* 金色边框 */
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        /* 🆕 攻防角标 (流式布局，位于文字下方) */
+        .pt-badge {
+            display: inline-block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            background-color: #fff;
+            padding: 4px 12px;
+            /* 稍微加点上边距，与文字隔开 */
+            margin-top: 5px; 
+        }
+
         .meta-tag { font-size: 0.8em; color: #6c757d; }
         #loading { display: none; text-align: center; margin: 40px; }
         
@@ -63,20 +102,19 @@
 <body>
 
 <div class="container mt-4">
-    <h1 class="text-center mb-4">万智牌设计大赛卡牌数据库 alpha</h1>
+    <h1 class="text-center mb-4">万智牌设计大赛卡牌数据库alpha</h1>
     
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="search-panel">
                 <div class="row g-3">
-                    
                     <!-- 联合搜索 -->
                     <div class="col-12">
                         <label for="searchCombined" class="form-label fw-bold text-primary">
                             联合搜索
                         </label>
                         <input type="text" class="form-control search-field form-control-lg" id="searchCombined" 
-                               placeholder="同时查找 牌名 / 类别 / 规则文本，应对排版偏移导致可能出现的OCR扫描错误。">
+                               placeholder="同时查找 牌名 / 类别 / 规则文本 / 风味文字">
                     </div>
 
                     <div class="col-12"><hr class="text-muted"></div>
@@ -171,7 +209,7 @@
         }
     }
 
-    function runQuery(sql) {
+    function runQuery(sql, isRandom = false) {
         if (!db) return;
         
         allCardsData = [];
@@ -198,7 +236,12 @@
                 return obj;
             });
 
-            countDiv.innerText = `共查找到 ${allCardsData.length} 个结果`;
+            if (isRandom) {
+                countDiv.innerText = `随机展示 ${allCardsData.length} 张`;
+            } else {
+                countDiv.innerText = `共查找到 ${allCardsData.length} 个结果`;
+            }
+
             renderPage();
 
         } catch (err) {
@@ -209,6 +252,7 @@
 
     function renderPage() {
         resultsDiv.innerHTML = '';
+        
         const startIndex = (currentPage - 1) * pageSize;
         const endIndex = Math.min(startIndex + pageSize, allCardsData.length);
         const pageCards = allCardsData.slice(startIndex, endIndex);
@@ -223,29 +267,53 @@
                 imgSrc = 'https://via.placeholder.com/300x400?text=暂无图片'; 
             }
 
-            const scoreHtml = (card.score && card.score !== 'N/A') 
-                ? `<span class="badge bg-warning text-dark border">${card.score}</span>` 
-                : '<span class="badge bg-light text-secondary border">暂无评分</span>';
+            // 分数 (左上角)
+            let scoreHtml = "";
+            if (card.score && card.score !== 'N/A' && card.score !== '') {
+                scoreHtml = `<div class="score-badge">${card.score}</div>`;
+            }
+
+            // 攻防 (移至文本区域右下角)
+            let ptHtml = "";
+            if (card.power_toughness) {
+                // 使用 text-end 让它靠右显示
+                ptHtml = `<div class="text-end"><span class="pt-badge">${card.power_toughness}</span></div>`;
+            }
+
+            // 风味文字
+            let flavorHtml = "";
+            if (card.flavor_text) {
+                flavorHtml = `<div class="mt-2 fst-italic small text-muted border-top pt-1">${card.flavor_text}</div>`;
+            }
 
             const html = `
                 <div class="col">
-                    <div class="card h-100">
-                        <img src="${imgSrc}" class="card-img-top" 
-                             alt="${card.name}" 
-                             loading="lazy" 
-                             onerror="this.src='https://via.placeholder.com/300x400?text=加载失败'">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-img-wrapper">
+                            <img src="${imgSrc}" class="card-img-top" 
+                                 alt="${card.name}" 
+                                 loading="lazy" 
+                                 onerror="this.src='https://via.placeholder.com/300x400?text=加载失败'">
+                            ${scoreHtml}
+                            <!-- 攻防已从这里移走 -->
+                        </div>
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title text-primary text-truncate" title="${card.name}">${card.name}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted small text-truncate" title="${card.type}">${card.type || '类别未知'}</h6>
-                            
-                            <div class="d-flex justify-content-between align-items-center mb-2 small">
-                                <span class="text-truncate" style="max-width: 60%;" title="${card.author}">🖌️ ${card.author}</span>
-                                ${scoreHtml}
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <h5 class="card-title text-primary text-truncate mb-0" title="${card.name}">${card.name}</h5>
                             </div>
                             
-                            <div class="oracle-text flex-grow-1">${card.oracle_text || '暂无规则文本'}</div>
+                            <h6 class="card-subtitle mb-2 text-muted small text-truncate border-bottom pb-1" title="${card.type}">${card.type || '类别未知'}</h6>
+                            
+                            <div class="oracle-text flex-grow-1 small" style="white-space: pre-wrap;">${card.oracle_text || '暂无规则文本'}</div>
+                            
+                            ${flavorHtml}
+                            ${ptHtml}
+
+                            <div class="mt-auto pt-2 d-flex justify-content-between align-items-center small text-secondary border-top mt-2">
+                                <span class="text-truncate" style="max-width: 100%;" title="${card.author}">作者：${card.author}</span>
+                            </div>
                         </div>
-                        <div class="card-footer bg-white text-muted small text-end border-top-0">
+                        <div class="card-footer bg-light text-muted small text-end py-1">
                             ${card.week}
                         </div>
                     </div>
@@ -281,7 +349,6 @@
 
     function searchData() {
         const combined = document.getElementById('searchCombined').value.trim();
-        
         const name = document.getElementById('searchName').value.trim();
         const author = document.getElementById('searchAuthor').value.trim();
         const week = document.getElementById('searchWeek').value.trim();
@@ -292,23 +359,22 @@
 
         let sql = `SELECT * FROM cards WHERE 1=1`;
 
-        // 1. 联合搜索
         if (combined) {
             const s = safe(combined);
             sql += ` AND (
                 REPLACE(name, char(10), '') LIKE '%${s}%' OR 
                 REPLACE(oracle_text, char(10), '') LIKE '%${s}%' OR 
-                REPLACE(type, char(10), '') LIKE '%${s}%'
+                REPLACE(type, char(10), '') LIKE '%${s}%' OR
+                REPLACE(flavor_text, char(10), '') LIKE '%${s}%'
             )`;
         }
 
-        // 2. 精确筛选
         if (name) sql += ` AND REPLACE(name, char(10), '') LIKE '%${safe(name)}%'`;
         if (author) sql += ` AND author LIKE '%${safe(author)}%'`;
         if (week) sql += ` AND week LIKE '%${safe(week)}%'`;
-        
         if (type) sql += ` AND REPLACE(type, char(10), '') LIKE '%${safe(type)}%'`;
         if (text) sql += ` AND REPLACE(oracle_text, char(10), '') LIKE '%${safe(text)}%'`;
+
         sql += ` ORDER BY id DESC`;
 
         runQuery(sql);
