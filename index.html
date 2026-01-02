@@ -15,13 +15,11 @@
             padding: 5px;
             border-bottom: 1px solid #eee;
         }
-
         .card-img-top {
             width: 100%;
             height: 300px;
             object-fit: contain;
         }
-
         .card { 
             height: 100%; 
             transition: transform 0.2s;
@@ -44,18 +42,18 @@
         
         .score-badge {
             position: absolute;
-            bottom: 10px;
+            top: 10px;
             left: 10px;
             font-size: 1.2rem;
             font-weight: bold;
             color: #fff;
             background-color: rgba(0, 0, 0, 0.7);
+            padding: 2px 8px;
             border-radius: 4px;
             border: 1px solid #ffd700;
             box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             z-index: 10;
         }
-
         .pt-badge {
             display: inline-block;
             font-size: 1.2rem;
@@ -77,14 +75,6 @@
             margin-bottom: 25px;
         }
         
-        .pagination-container {
-            margin-top: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-        }
-        
         #searchCombined {
             border-color: #86b7fe;
             background-color: #f0f7ff;
@@ -92,58 +82,68 @@
         #searchCombined:focus {
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
         }
+
+        .pagination-bar {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .page-input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .page-input {
+            width: 60px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
 <div class="container mt-4">
-    <h1 class="text-center mb-4">万智牌设计大赛卡牌数据库alpha</h1>
+    <h1 class="text-center mb-4">万智牌设计大赛卡牌数据库 alpha</h1>
     
+    <!-- 搜索区域 -->
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="search-panel">
                 <div class="row g-3">
-                    <!-- 联合搜索 -->
                     <div class="col-12">
-                        <label for="searchCombined" class="form-label fw-bold text-primary">
-                            联合搜索
-                        </label>
+                        <label for="searchCombined" class="form-label fw-bold text-primary">联合搜索</label>
                         <input type="text" class="form-control search-field form-control-lg" id="searchCombined" 
                                placeholder="同时查找 牌名 / 类别 / 规则文本 / 风味文字">
                     </div>
-
                     <div class="col-12"><hr class="text-muted"></div>
-
-                    <!-- 精确筛选 -->
                     <div class="col-md-4">
-                        <label for="searchName" class="form-label small text-muted">仅搜牌名 (Name)</label>
+                        <label for="searchName" class="form-label small text-muted">仅搜牌名</label>
                         <input type="text" class="form-control search-field" id="searchName" placeholder="例如：荆轲">
                     </div>
                     <div class="col-md-4">
-                        <label for="searchAuthor" class="form-label small text-muted">仅搜作者 (Author)</label>
+                        <label for="searchAuthor" class="form-label small text-muted">仅搜作者</label>
                         <input type="text" class="form-control search-field" id="searchAuthor" placeholder="例如：HalfLife">
                     </div>
                     <div class="col-md-4">
-                        <label for="searchWeek" class="form-label small text-muted">仅搜时间 (Week)</label>
+                        <label for="searchWeek" class="form-label small text-muted">仅搜时间</label>
                         <input type="text" class="form-control search-field" id="searchWeek" placeholder="例如：第三十六周">
                     </div>
-
                     <div class="col-md-4">
-                        <label for="searchType" class="form-label small text-muted">仅搜类别 (Type)</label>
+                        <label for="searchType" class="form-label small text-muted">仅搜类别</label>
                         <input type="text" class="form-control search-field" id="searchType" placeholder="例如：传奇生物">
                     </div>
                     <div class="col-md-8">
-                        <label for="searchOracle" class="form-label small text-muted">仅搜规则 (Oracle Text)</label>
+                        <label for="searchOracle" class="form-label small text-muted">仅搜规则</label>
                         <input type="text" class="form-control search-field" id="searchOracle" placeholder="例如：造成3点伤害">
                     </div>
-
                     <div class="col-12 text-end mt-3">
                         <button class="btn btn-outline-secondary me-2" onclick="clearSearch()">重置条件</button>
                         <button class="btn btn-primary px-5" onclick="searchData()">查询</button>
                     </div>
                 </div>
             </div>
-
             <div id="resultCount" class="text-center text-muted mt-2" style="font-size: 0.9rem; min-height: 24px;"></div>
         </div>
     </div>
@@ -153,12 +153,12 @@
         <p class="mt-2 text-muted">正在读取数据库...</p>
     </div>
 
+    <div id="paginationTop" class="pagination-bar">
+    </div>
+
     <div id="results" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4"></div>
 
-    <div id="pagination" class="pagination-container" style="display: none;">
-        <button id="btnPrev" class="btn btn-outline-primary" onclick="changePage(-1)">« 上一页</button>
-        <span id="pageInfo" class="fw-bold text-secondary">第 1 / 1 页</span>
-        <button id="btnNext" class="btn btn-outline-primary" onclick="changePage(1)">下一页 »</button>
+    <div id="paginationBottom" class="pagination-bar">
     </div>
 </div>
 
@@ -171,10 +171,9 @@
     const loadingDiv = document.getElementById('loading');
     const resultsDiv = document.getElementById('results');
     const countDiv = document.getElementById('resultCount');
-    const paginationDiv = document.getElementById('pagination');
-    const pageInfoSpan = document.getElementById('pageInfo');
-    const btnPrev = document.getElementById('btnPrev');
-    const btnNext = document.getElementById('btnNext');
+    
+    const paginationTop = document.getElementById('paginationTop');
+    const paginationBottom = document.getElementById('paginationBottom');
 
     async function initApp() {
         loadingDiv.style.display = 'block';
@@ -211,7 +210,8 @@
         currentPage = 1;
         resultsDiv.innerHTML = '';
         countDiv.innerText = "查询中...";
-        paginationDiv.style.display = 'none';
+        paginationTop.style.display = 'none';
+        paginationBottom.style.display = 'none';
 
         try {
             const contents = db.exec(sql);
@@ -262,19 +262,17 @@
                 imgSrc = 'https://via.placeholder.com/300x400?text=暂无图片'; 
             }
 
-            // 分数 
             let scoreHtml = "";
             if (card.score && card.score !== 'N/A' && card.score !== '') {
+                // 分数左上角
                 scoreHtml = `<div class="score-badge">${card.score}</div>`;
             }
 
-            // 攻防 
             let ptHtml = "";
             if (card.power_toughness) {
                 ptHtml = `<div class="text-end"><span class="pt-badge">${card.power_toughness}</span></div>`;
             }
 
-            // 风味文字
             let flavorHtml = "";
             if (card.flavor_text) {
                 flavorHtml = `<div class="mt-2 fst-italic small text-muted border-top pt-1">${card.flavor_text}</div>`;
@@ -303,7 +301,7 @@
                             ${ptHtml}
 
                             <div class="mt-auto pt-2 d-flex justify-content-between align-items-center small text-secondary border-top mt-2">
-                                <span class="text-truncate" style="max-width: 100%;" title="${card.author}">作者：${card.author}</span>
+                                <span class="text-truncate" style="max-width: 100%;" title="${card.author}">🖌️ 作者：${card.author}</span>
                             </div>
                         </div>
                         <div class="card-footer bg-light text-muted small text-end py-1">
@@ -318,16 +316,41 @@
         updatePaginationUI();
     }
 
+    function generatePaginationHTML(totalPages) {
+        const isFirst = currentPage === 1;
+        const isLast = currentPage === totalPages;
+
+        return `
+            <button class="btn btn-outline-primary" onclick="changePage(-1)" ${isFirst ? 'disabled' : ''}>« 上一页</button>
+            
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-secondary">第</span>
+                <input type="number" class="form-control page-input" 
+                       value="${currentPage}" min="1" max="${totalPages}" 
+                       onchange="jumpToPage(this.value)" 
+                       onkeypress="if(event.key==='Enter') jumpToPage(this.value)">
+                <span class="text-secondary">/ ${totalPages} 页</span>
+            </div>
+
+            <button class="btn btn-outline-primary" onclick="changePage(1)" ${isLast ? 'disabled' : ''}>下一页 »</button>
+        `;
+    }
+
     function updatePaginationUI() {
         const totalPages = Math.ceil(allCardsData.length / pageSize);
+        
         if (totalPages > 1) {
-            paginationDiv.style.display = 'flex';
-            pageInfoSpan.innerText = `第 ${currentPage} / ${totalPages} 页`;
-            btnPrev.disabled = (currentPage === 1);
-            btnNext.disabled = (currentPage === totalPages);
+            const html = generatePaginationHTML(totalPages);
+            paginationTop.innerHTML = html;
+            paginationTop.style.display = 'flex';
+            
+            paginationBottom.innerHTML = html;
+            paginationBottom.style.display = 'flex';
         } else {
-            paginationDiv.style.display = 'none';
+            paginationTop.style.display = 'none';
+            paginationBottom.style.display = 'none';
         }
+        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -337,6 +360,19 @@
         if (newPage >= 1 && newPage <= totalPages) {
             currentPage = newPage;
             renderPage();
+        }
+    }
+
+    function jumpToPage(pageNum) {
+        const totalPages = Math.ceil(allCardsData.length / pageSize);
+        const p = parseInt(pageNum);
+        
+        if (!isNaN(p) && p >= 1 && p <= totalPages) {
+            currentPage = p;
+            renderPage();
+        } else {
+            updatePaginationUI(); 
+            alert(`请输入 1 到 ${totalPages} 之间的页码`);
         }
     }
 
