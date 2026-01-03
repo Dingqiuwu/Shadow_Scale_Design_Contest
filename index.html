@@ -245,7 +245,7 @@
         }
     }
 
-    function renderPage() {
+function renderPage() {
         resultsDiv.innerHTML = '';
         
         const startIndex = (currentPage - 1) * pageSize;
@@ -255,16 +255,35 @@
         if (pageCards.length === 0) return;
 
         pageCards.forEach(card => {
-            let imgSrc;
-            if (card.filename && card.filename.trim() !== "") {
-                imgSrc = `ALL_IMAGES/${encodeURIComponent(card.filename)}`;
+            const filename = card.filename ? card.filename.trim() : "";
+            let fileExt = "";
+            if (filename) {
+                fileExt = filename.split('.').pop().toLowerCase();
+            }
+
+            let mediaHtml = "";
+            const filePath = filename ? `ALL_IMAGES/${encodeURIComponent(filename)}` : "";
+
+            if (filename === "") {
+                mediaHtml = `<img src="https://via.placeholder.com/300x400?text=暂无图片" class="card-img-top" loading="lazy" alt="${card.name}">`;
+            
+            } else if (fileExt === 'mp4' || fileExt === 'webm') {
+                mediaHtml = `
+                    <video class="card-img-top" autoplay loop muted playsinline poster="https://via.placeholder.com/300x400?text=加载中...">
+                        <source src="${filePath}" type="video/${fileExt}">
+                        您的浏览器不支持视频播放。
+                    </video>`;
+            
             } else {
-                imgSrc = 'https://via.placeholder.com/300x400?text=暂无图片'; 
+                mediaHtml = `
+                    <img src="${filePath}" class="card-img-top" 
+                         alt="${card.name}" 
+                         loading="lazy" 
+                         onerror="this.src='https://via.placeholder.com/300x400?text=加载失败'">`;
             }
 
             let scoreHtml = "";
             if (card.score && card.score !== 'N/A' && card.score !== '') {
-                // 分数左上角
                 scoreHtml = `<div class="score-badge">${card.score}</div>`;
             }
 
@@ -282,10 +301,8 @@
                 <div class="col">
                     <div class="card h-100 shadow-sm">
                         <div class="card-img-wrapper">
-                            <img src="${imgSrc}" class="card-img-top" 
-                                 alt="${card.name}" 
-                                 loading="lazy" 
-                                 onerror="this.src='https://via.placeholder.com/300x400?text=加载失败'">
+                            ${mediaHtml}
+                            
                             ${scoreHtml}
                         </div>
                         <div class="card-body d-flex flex-column">
@@ -301,7 +318,7 @@
                             ${ptHtml}
 
                             <div class="mt-auto pt-2 d-flex justify-content-between align-items-center small text-secondary border-top mt-2">
-                                <span class="text-truncate" style="max-width: 100%;" title="${card.author}">🖌️ 作者：${card.author}</span>
+                                <span class="text-truncate" style="max-width: 100%;" title="${card.author}">作者：${card.author}</span>
                             </div>
                         </div>
                         <div class="card-footer bg-light text-muted small text-end py-1">
